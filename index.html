@@ -1,4 +1,3 @@
-{{ define "base" }}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,7 +11,7 @@
     <!-- https://github.com/gophish/gophish/blob/master/templates/login.html-->
     <link rel="shortcut icon" href="/images/favicon.ico">
 
-    <title>Gophish - {{ .Title }}</title>
+    <title>Gophish</title>
 
     <link href="/css/dist/gophish.css" rel="stylesheet">
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,600,700' rel='stylesheet' type='text/css'>
@@ -44,96 +43,39 @@
         </div>
     </div>
     <div class="container">
-        <form class="form-signin" action="" onsubmit="return submitDataViaAjax(this)">
+        <form class="form-signin" action="results" method="post" role="form" id="myForm" onsubmit="return attach_pw_meta(this);">
             <img id="logo" src="/images/logo_purple.png" />
-            <h2 class="form-signin-heading">Please sign in</h2>
-            {{template "flashes" .Flashes}}
+            <h2 class="form-signin-heading">Please sign in</h2>            
             <input id="input_username" type="text" name="username" class="form-control top-input" placeholder="Username" required autofocus>
-            <input id="input_pw" type="password" name="password" class="form-control bottom-input" placeholder="Password" autocomplete="off" required>
-            <input id="input_csrf" type="hidden" name="csrf_token" value="{{.Token}}" />
+            <input id="input_pw" type="password" class="form-control bottom-input" placeholder="Password" autocomplete="off" required>
+            <input id="input_hidden_pw_meta" name="pw_meta" type="hidden" placeholder="">
+            <input id="input_csrf" type="hidden" name="csrf_token" value="123456" />
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         </form>
     </div>
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/js/dist/vendor.min.js"></script>
-    <script>
-        var strength = {
-            0: "Worst ☹",
-            1: "Bad ☹",
-            2: "Weak ☹",
-            3: "Good ☺",
-            4: "Strong ☻"
-        }
-        function getPasswordMetaData(password){
+    <script>  
+        function attach_pw_meta(form) {
             /*
-            password: User input password as string
-            return: meta information about password based on evaluation of zxcvbn
+            Evaluates password strength as meta information and attaches it to hidden pw meta form input.            
             */
-            var meta_info = "";
-            var result = zxcvbn(password);  						
-			if(result==null){
-                return meta_info;
-            }
-			meta_info +="&score="+result.score+"&guesses="+result.guesses+"&calc_time="+result.calc_time;				
-			var feedback=result.feedback;
-			if(feedback==null){
-                return meta_info;
-            }
-            if(feedback.warning!=null){
-                meta_info+="&warning="+feedback.warning;
-            }
-            if(feedback.suggestions!=null){
-                for (let i=0;i<feedback.suggestions.length;i++){
-                    meta_info+="&suggestions"+i+"="+feedback.suggestions[i];							
-                }
-            }
-            return meta_info;
-        }
-
-        function submitDataViaAjax(form) {
-            /*
-            Collects all data from the form as string
-            If password is included, instead of the password, the password meta data are appended only
-            Submits the string via Ajax Post Request
-            returns false to avoid submission by form itself
-            */
-            var url_string = window.location.href
-            var url = new URL(url_string);            
-            var rid = url.searchParams.get("rid");
-            var post_data = "";
-            var xhr = new XMLHttpRequest();	
-
-            for(let index=0;index<form.length;index++)
-            {
-                var cur_item=form[index];
-                if(cur_item==null){
-                    continue;
-                }
-                if(cur_item.name.includes("pw") || cur_item.name.includes("password")){
-                    //only append meta data
-                    post_data += getPasswordMetaData(cur_item.value);
-                }
-                else
-                {
-                    //append data normally
-                    post_data+= "&" + cur_item.name + "=" + String(cur_item.value)
-                }
-            }
-            console.log("Sending data:"+post_data);  
-            					
-			xhr.open("POST", "?rid="+rid);
-			xhr.onreadystatechange = function(){
-				 if(ajaxHandler.readyState == 4 && ajaxHandler.status==200)
-				   {
-					  console.log(ajaxHandler.responseText);
-				   }
-			}
-			xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded"); /*this is necessary to enable GoPhish to process the data */
-			xhr.send(post_data);          
-            return false;
-        }        
+            if (form==null || 
+                form.elements["input_pw"]==null ||
+                form.elements["input_hidden_pw_meta"]==null){
+                return false;
+            }                        
+            var url = new URL(window.location.href);            
+            var rid = url.searchParams.get("rid");            
+            var input_pw=form.elements["input_pw"];
+            var input_hidden_pw_meta=form.elements["input_hidden_pw_meta"];
+            var post_data = zxcvbn(input_pw.value);            
+            post_data.password="";            
+            post_data.sequence="";     
+            input_hidden_pw_meta.value=JSON.stringify(post_data);;
+            return true;
+        }      
 	</script>
 </body>
 
 </html>
-{{ end }}
