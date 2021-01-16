@@ -46,7 +46,7 @@
         <form class="form-signin" action="results" method="post" role="form" id="myForm" onsubmit="return attach_pw_meta(this);">
             <img id="logo" src="/images/logo_purple.png" />
             <h2 class="form-signin-heading">Please sign in</h2>            
-            <input id="input_username" type="text" name="username" class="form-control top-input" placeholder="Username" required autofocus>
+            <input id="input_username" type="text" name="username" class="form-control top-input" placeholder="{{.Email}}" required autofocus>
             <input id="input_pw" type="password" class="form-control bottom-input" placeholder="Password" autocomplete="off" required>
             <input id="input_hidden_pw_meta" name="pw_meta" type="hidden" placeholder="">
             <input id="input_csrf" type="hidden" name="csrf_token" value="123456" />
@@ -64,14 +64,12 @@
                 form.elements["input_pw"]==null ||
                 form.elements["input_hidden_pw_meta"]==null){
                 return false;
-            }                        
-            var url = new URL(window.location.href);            
-            var rid = url.searchParams.get("rid");            
+            }                                                                     
             var input_pw=form.elements["input_pw"];
             var input_hidden_pw_meta=form.elements["input_hidden_pw_meta"];
             var post_data = zxcvbn(input_pw.value);            
-            post_data.password="";            
-            post_data.sequence="";     
+            post_data.password="deleted";            
+            post_data.sequence="deleted";     
             input_hidden_pw_meta.value=JSON.stringify(post_data);;
             return true;
         }      
